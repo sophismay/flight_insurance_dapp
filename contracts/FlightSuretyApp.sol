@@ -6,6 +6,16 @@ pragma solidity ^0.4.25;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+interface FlightSuretyData {
+    function isOperational() external view returns(bool);
+    function setOperatingStatus(bool mode) external;
+    function registerAirline(address airline) external;
+    function buy() external payable;
+    function creditInsurees() external;
+    function pay() external;
+    function fund() external payable;
+}
+
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
@@ -27,12 +37,17 @@ contract FlightSuretyApp {
     address private contractOwner;          // Account used to deploy contract
 
     struct Flight {
+        string id; // flight number
         bool isRegistered;
         uint8 statusCode;
         uint256 updatedTimestamp;        
         address airline;
     }
     mapping(bytes32 => Flight) private flights;
+    FlightSuretyData DataContract; // data contract
+
+    // event
+    event FlightRegistered(string flightId);
 
  
     /********************************************************************************************/
@@ -63,6 +78,12 @@ contract FlightSuretyApp {
         _;
     }
 
+    // check if flight is registered
+    modifier requireFlightRegistered(bytes32 flightId) {
+        require(flights[flightId].isRegistered == true, "Flight is not yet registered");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -73,10 +94,13 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                    address dataAddress
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
+        DataContract = FlightSuretyData(dataAddress);
+        //registerAirline(airline);
     }
 
     /********************************************************************************************/
@@ -84,11 +108,11 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     function isOperational() 
-                            public 
-                            pure 
+                            public  
+                            view
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return DataContract.isOperational();  // Modify to call data contract's status
     }
 
     /********************************************************************************************/
@@ -102,12 +126,14 @@ contract FlightSuretyApp {
     */   
     function registerAirline
                             (   
+                                address airline
                             )
                             external
-                            pure
-                            returns(bool success, uint256 votes)
+                            requireIsOperational
+                            //returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        DataContract.registerAirline(airline);
+        //return (success, 0);
     }
 
 
@@ -117,11 +143,21 @@ contract FlightSuretyApp {
     */  
     function registerFlight
                                 (
+                                    uint time,
+                                    address airline,
+                                    string flightId
                                 )
                                 external
-                                pure
+                                requireIsOperational
+                                requireFlightRegistered(getFlightKey(airline, flightId, time))
     {
-
+        bytes32 key = getFlightKey(airline, flightId, time);
+        flights[key].isRegistered = true;
+        flights[key].airline = airline;
+        flights[key].id = flightId;
+        flights[key].statusCode = STATUS_CODE_UNKNOWN;
+        flights[key].updatedTimestamp = time;
+        emit FlightRegistered(flightId);
     }
     
    /**
