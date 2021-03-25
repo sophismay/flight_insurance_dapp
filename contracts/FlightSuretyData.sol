@@ -20,9 +20,10 @@ contract FlightSuretyData {
     struct Airline {
         address airlineAddress; // do we need this?
         bool isRegistered;
-        uint votes;
         bool hasFunded;
     }
+    mapping(address => bool) private Voters;
+    mapping(address => uint256) private Votes;
     mapping(address => Airline) Airlines; // address to Airline
     address[] private registeredAirlines; // existing airlines for easy lookup
     // passenger
@@ -38,6 +39,7 @@ contract FlightSuretyData {
     mapping(address => Passenger) Passengers;
     mapping(string => address[]) flightPassengers;
     mapping(address => uint256) private insurancePayouts;
+    address private firstAirline;
     
 
     /********************************************************************************************/
@@ -61,7 +63,9 @@ contract FlightSuretyData {
         contractOwner = msg.sender;
         funds = 0;
         registeredAirlines = new address[](0);
-        registerFirstAirline(airlineAddress);
+        //registerFirstAirline(airlineAddress);
+        // make owner first airline
+        registerFirstAirline(contractOwner);
     }
 
     /********************************************************************************************/
@@ -97,7 +101,7 @@ contract FlightSuretyData {
     }
 
     // require multiparty consensus 
-    modifier requireMultipartyConsensus() {
+    modifier requireMultipartyConsensus(address sender) {
         // initially, just first 4 or below can register, else multisig
         if(registeredAirlines.length < 4) {
             _;
@@ -105,13 +109,13 @@ contract FlightSuretyData {
             bool isDuplicate = false;
             // needs optimization: eg. make caller get for each airline
             for(uint c=0; c<multisigCalls.length; c++) {
-                if(multisigCalls[c] == msg.sender) {
+                if(multisigCalls[c] == sender) {
                     isDuplicate = true;
                     break;
                 }
             }
             require(!isDuplicate, "Caller has already called this function");
-            multisigCalls.push(msg.sender);
+            multisigCalls.push(sender);
             // threshold to register
             uint256 registeredSize = registeredAirlines.length;
             MIN_CONSENSUS_RESPONSES = registeredSize.div(2);
@@ -133,14 +137,14 @@ contract FlightSuretyData {
     }
 
     // require is registered airline
-    modifier requireAirlineRegistered() {
-        require(Airlines[msg.sender].isRegistered == true, "Only registered airlines can register other airlines!");
+    modifier requireAirlineRegistered(address sender) {
+        require(Airlines[sender].isRegistered == true, "Only registered airlines can register other airlines!");
         _;
     }
 
     // require airline has funded 10 ether to participate in contract 
-    modifier requireAirlineHasFunded() {
-        require(Airlines[msg.sender].hasFunded == true, "Only airlines that have funded can perform this action!");
+    modifier requireAirlineHasFunded(address airline) {
+        require(Airlines[airline].hasFunded == true, "Only airlines that have funded can perform this action!");
         _;
     }
 
@@ -198,6 +202,37 @@ contract FlightSuretyData {
         isFunded = Airlines[airline].hasFunded;
     }
 
+    function setMultisigCall(address airline) internal requireIsOperational{
+        multisigCalls.push(airline);
+    }
+
+    function getMultisigCallsLength() external view returns(uint256) {
+        return multisigCalls.length;
+    }
+
+    function setAirlineVoteStatus(address airline, bool status) external {
+        Voters[airline] = status;
+    }
+
+    function getAirlineVoteStatus(address airline) external view returns(bool) {
+        return Voters[airline];
+    }
+
+    function getVotesCount(address airline) external view requireIsOperational returns(uint256) {
+        return Votes[airline];
+    }
+
+    // update count of votes airline has received
+    function updateVotesCount(address airline, uint count) external requireIsOperational {
+        // temp
+        uint256 vote = Votes[airline];
+        Votes[airline] = vote.add(count);
+    }
+
+    function resetVotesCount(address airline) external requireIsOperational {
+        delete Votes[airline];
+    }
+
 
     //fallback() external payable {}
     //receive() external payable {}
@@ -242,23 +277,25 @@ contract FlightSuretyData {
     */   
     function registerAirline
                             (   
-                                address airline
+                                address airline,
+                                address sender
                             )
                             external
                             requireIsOperational
-                            requireAirlineRegistered
-                            requireMultipartyConsensus
-                            requireAirlineHasFunded
+                            //requireAirlineRegistered(sender) // only registered airline can register another
+                            //requireMultipartyConsensus(sender)
+                            //requireAirlineHasFunded(sender) // sender can participate only if funded
                             //returns(bool, uint)
     {
         // avoid duplicate registration
-        require(!Airlines[airline].isRegistered, "Airline is already registered!");
+        //require(!Airlines[airline].isRegistered, "REGISTER AIRLINE: AIRLINE ALREADY REGISTERED!");
         Airlines[airline] = Airline({
             airlineAddress: airline,
             isRegistered: true,
-            votes: 0,
+            //votes: 0,
             hasFunded: false
         });
+        setMultisigCall(airline);
         registeredAirlines.push(airline);
         emit AirlineRegistered(airline);
         //registeredAirlines[airline] = _airline;
@@ -266,16 +303,24 @@ contract FlightSuretyData {
     }
 
     // register first airline
-    function registerFirstAirline(address newAirlineAddress) internal requireIsOperational requireContractOwner {
-        require(!Airlines[newAirlineAddress].isRegistered, "Airline is already registered.");
+    function registerFirstAirline(address newAirlineAddress) internal requireIsOperational {
+        //require(!Airlines[newAirlineAddress].isRegistered, "Airline is already registered.");
 
-        Airline _airline = Airlines[newAirlineAddress];
-        _airline.airlineAddress = newAirlineAddress;
-        _airline.isRegistered = true;
-        _airline.hasFunded = false;
-        _airline.votes = 0;
+        Airlines[newAirlineAddress].airlineAddress = newAirlineAddress;
+        Airlines[newAirlineAddress].isRegistered = true;
+        Airlines[newAirlineAddress].hasFunded = false;
+        //Airlines[newAirlineAddress].votes = 0;
         registeredAirlines.push(newAirlineAddress);
+        firstAirline = newAirlineAddress;
         emit AirlineRegistered(newAirlineAddress);
+    }
+
+    function isAirlineRegistered(address airline) public view returns(bool) {
+        return Airlines[airline].isRegistered;
+    }
+
+    function getFirstAirline() public view returns(address _firstAirline) {
+        _firstAirline = firstAirline;
     }
 
 
@@ -285,7 +330,10 @@ contract FlightSuretyData {
     */   
     function buy
                             (   
-                                string flight                         
+                                string flight,
+                                uint256 time,
+                                address passenger,
+                                uint256 amount                         
                             )
                             external
                             payable
@@ -381,15 +429,21 @@ contract FlightSuretyData {
     */   
     function fund
                             (   
+                                address sender,
+                                uint256 amount
                             )
-                            public
-                            payable
+                            external
                             requireIsOperational
-                            requireAirlineRegistered
-                            requireSufficientFunding(msg.value)
+                            //requireAirlineRegistered
+                            requireSufficientFunding(amount)
     {
-        Airlines[msg.sender].hasFunded = true;
-        emit FundReceived(msg.sender, msg.value);
+        //if (!Airlines[sender]) {
+        //    Airlines[sender] = Airline({
+        //        airlineAddress: sender,
+        //    })
+        //}
+        Airlines[sender].hasFunded = true;
+        emit FundReceived(sender, amount);
     }
 
     function getFlightKey
@@ -413,10 +467,10 @@ contract FlightSuretyData {
                             external 
                             payable 
     {
-        fund();
+        this.fund(msg.sender, msg.value);
     }
 
-    function authorizeCaller(address appContract) external {
+    function authorizeCaller(address appContract) external requireContractOwner {
         authorizedApps[appContract] = true;
     }
 

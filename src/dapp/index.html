@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>FlightSurety</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./flightsurety.css" rel="stylesheet" />
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 
@@ -26,6 +27,68 @@
         <div class="row top-20">
             <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>
+
+        <div id="display-wrapper" class="top-20">
+            Airline
+
+            <div class="row top-20">
+                <label class="form">Arline Address</label> 
+                <input type="text" id="airline-number"> 
+                <btn class="btn btn-primary" id="submit-oracle">
+                    Fund Airline
+                </btn>
+            </div>
+        </div>
+        <br/>
+        <span></span>
+
+        <div id="display-wrapper" class="top-20">
+            Flight Status
+
+            <div class="row top-20">
+                <label class="form">Flight Status</label> 
+                <select id="flight-select"></select>
+                <btn class="btn btn-primary" id="submit-oracle">
+                    Check Status
+                </btn>
+            </div>
+        </div>
+        <br/>
+        <span></span>
+
+        <div id="display-wrapper" class="top-20">
+            Passenger Insurance
+
+            <div class="row top-20">
+                <label class="form">Flight Status</label> 
+                <select id="flight-select"></select>
+                <btn class="btn btn-primary" id="flight-status-btn">
+                    Check Status
+                </btn>
+                <div id="flight-status-info"></div>
+            </div>
+        </div>
+        <br/>
+        <span></span>
+
+        <div id="display-wrapper" class="top-20">
+            Passenger Insurance Balance
+            <div id="passenger-credit"></div>
+            <btn class="btn btn-primary" id="passenger-credit-btn">
+                Check Insurance Credit
+            </btn>
+            <div class="row top-20">
+                <label class="form">Withdraw credit</label>
+                <btn class="btn btn-primary" id="passenger-credit-withdraw">
+                    Withdraw
+                </btn>
+                <div id="flight-status-info"></div>
+            </div>
+        </div>
+        <br/>
+        <span></span>
+
+        
     </main>
 
 </body>
