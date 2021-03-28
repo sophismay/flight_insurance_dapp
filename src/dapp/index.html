@@ -25,10 +25,24 @@
         <div id="display-wrapper" class="top-20">
         </div>
         <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+            <label class="form">Flight</label>
+            <select id="flight-number"></select> 
+            <input id='departure-date' type="date" data-date-inline-picker="true" required />
+            <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
         </div>
 
-        <div id="display-wrapper" class="top-20">
+        <div class="top-20" id="status-box">
+            <p style="display: none;">
+
+            </p>
+        </div>
+
+        <div class="top-20">
+			<btn class="btn btn-primary" id="trigger-oracle-response" type="button">Check Flight Status</btn>
+			<span id='event-index-placeholder' style="display: none"></span>
+		</div>
+
+        <!--<div id="display-wrapper" class="top-20">
             Airline
 
             <div class="row top-20">
@@ -40,9 +54,9 @@
             </div>
         </div>
         <br/>
-        <span></span>
+        <span></span>-->
 
-        <div id="display-wrapper" class="top-20">
+        <!--<div id="display-wrapper" class="top-20">
             Flight Status
 
             <div class="row top-20">
@@ -52,21 +66,21 @@
                     Check Status
                 </btn>
             </div>
-        </div>
+        </div> -->
         <br/>
         <span></span>
 
         <div id="display-wrapper" class="top-20">
             Passenger Insurance
 
-            <div class="row top-20">
+            <!--<div class="row top-20">
                 <label class="form">Flight Status</label> 
                 <select id="flight-select"></select>
                 <btn class="btn btn-primary" id="flight-status-btn">
                     Check Status
                 </btn>
                 <div id="flight-status-info"></div>
-            </div>
+            </div>-->
         </div>
         <br/>
         <span></span>

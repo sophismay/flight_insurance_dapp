@@ -17,6 +17,10 @@ export default class Contract {
         this.airlines = [];
         this.passengers = [];
         this.flights = [];
+        this.gas = 5000000;
+        this.STATUS_CODES = [0, 10, 20, 30, 40, 50];
+        let random_status_code = this.STATUS_CODES[Math.floor(Math.random() * this.STATUS_CODES.length)];
+        console.log(`status code random : ${random_status_code}`);
     }
 
     /*initialize(callback, config) {
@@ -138,7 +142,7 @@ export default class Contract {
         await self.flightSuretyApp
                     .methods
                     .fund()
-                    .send({ from: sender, value: funding, gas: gas }, async (err, res) => {
+                    .send({ from: sender, value: funding, gas: self.gas }, async (err, res) => {
                         if(err) { console.log(err); }
                         else {
                             // update airline info
@@ -204,17 +208,33 @@ export default class Contract {
             .call({ from: self.owner }, next);
     }
 
-    async fetchFlightStatus(flight, next) {
+    async submitToOracle(airline, flight, time, index, next) {
         let self = this;
-        let payload = {
-            airline: self.airlines[0],
+        let random_status_code = self.STATUS_CODES[Math.floor(Math.random() * self.STATUS_CODES.length)];
+        console.log(`status code random : ${random_status_code}`)
+        self
+            .flightSuretyApp
+            .methods
+            .initiateOracleResponse(airline, flight, time, index, random_status_code)
+            .send({ from: self.owner, gas: self.gas }, (err, res) => { next(err, {
+                index: index,
+                airline: airline,
+                timestamp: time,
+                statusCode: random_status_code
+            }); });
+    }
+
+    async fetchFlightStatus(flight, date, next) {
+        let self = this;
+        let data = {
+            airline: self.airlines[0]['address'],
             flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
+            timestamp: Date.parse(date.toString()) / 1000 //Math.floor(Date.now() / 1000)
         } 
         await self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner, gas: gas }, (error, result) => {
-                next(error, payload);
+            .fetchFlightStatus(data.airline, data.flight, data.timestamp)
+            .send({ from: self.owner, gas: 3000000 }, (error, result) => {
+                next(error, data);
             });
     }
 

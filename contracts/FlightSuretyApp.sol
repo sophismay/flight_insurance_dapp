@@ -280,7 +280,7 @@ contract FlightSuretyApp {
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
     // Number of oracles that must respond for valid status
-    uint256 private constant MIN_RESPONSES = 3;
+    uint256 private constant MIN_RESPONSES = 2;
 
 
     struct Oracle {
@@ -314,6 +314,22 @@ contract FlightSuretyApp {
     // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
 
+    // event when client initiates oracle response
+    event SubmitOracleResponse(address airline, string flight, uint256 timestamp, uint8 indexes, uint8 statusCode);
+
+    /**
+     * @dev initiate oracle response from client
+     *
+     */
+    function initiateOracleResponse(address airline, string flight, uint256 timestamp, uint8 indexes, uint8 statusCode) public requireIsOperational {
+        emit SubmitOracleResponse(
+            airline,
+            flight,
+            timestamp,
+            indexes,
+            statusCode
+        );
+    }
 
     // Register an oracle with the contract
     function registerOracle
