@@ -99,7 +99,6 @@ contract('Flight Surety Tests', async (accounts) => {
     let secondAirline = accounts[2];
     let thirdAirline = accounts[3];
     let fourthAirline = accounts[4];
-    //let fifthAirline = accounts[5];
     const funding = web3.utils.toWei('10', 'ether');
 
     
@@ -108,7 +107,6 @@ contract('Flight Surety Tests', async (accounts) => {
       await config.flightSuretyApp.fund({ from: config.owner, value: funding });
 
       await config.flightSuretyApp.registerAirline(firstAirline, { from: config.owner });
-      //console.log(`reguster auirline ${JSON.stringify(txResult)}`);
       await config.flightSuretyApp.registerAirline(secondAirline, { from: config.owner });
       await config.flightSuretyApp.registerAirline(thirdAirline, { from: config.owner });
       let result = await config.flightSuretyApp.registerAirline(fourthAirline, { from: config.owner });
@@ -116,49 +114,8 @@ contract('Flight Surety Tests', async (accounts) => {
     } catch(e) {
       //console.log(e);
     }
-
-    //let result = await config.flightSuretyData.isAirlineRegistered.call(fourthAirline);
-    //console.log(`registering 4th airline ${result}`);
-    //assert.equal(result, false, "Multisig consensus passed");
-
-    // first airline funds
-    /*await config.flightSuretyData.fund({ from: firstAirline, value: funding });
-
-    // add second airline. first airline should be able to register second now after funding
-    await config.flightSuretyData.registerAirline(secondAirline, { from: firstAirline });
-    let registered = await config.flightSuretyData.isRegisteredAirline.call(secondAirline);
-    assert.equal(registered, true, "Airline should be able to register another airline after funding");
-
-    // second airline registering third airline
-    await config.flightSuretyData.fund({ from: secondAirline, value: funding });
-    let hasFunded = await config.flightSuretyData.isFundedAirline.call(secondAirline);
-    assert.equal(hasFunded, true, "Airline should be funded");
-
-    await config.flightSuretyData.registerAirline(thirdAirline, { from: secondAirline });
-    let thirdRegistered = await config.flightSuretyData.isRegisteredAirline.call(thirdAirline);
-    assert.equal(thirdRegistered, true, "Airline should be able to register another airline after funding");
-
-     // third airline registering fourth airline
-     await config.flightSuretyData.fund({ from: thirdAirline, value: funding });
-     let hasFunded2 = await config.flightSuretyData.isFundedAirline.call(thirdAirline);
-     assert.equal(hasFunded2, true, "Airline should be funded");
- 
-     await config.flightSuretyData.registerAirline(fourthAirline, { from: thirdAirline });
-     let fourthRegistered = await config.flightSuretyData.isRegisteredAirline.call(thirdAirline);
-     assert.equal(fourthRegistered, true, "Airline should be able to register another airline after funding");
-    */
   });
 
-  /*it('(airline) can be registered, but does not participate in contract until it submits funding of 10 ether', async () => {
-    const funding = web3.utils.toWei('10', 'ether');
-    const fourthAirline = accounts[4];
-    const fifthAirline = accounts[5];
-
-    await config.flightSuretyData.registerAirline(fifthAirline, { from: fourthAirline });
-    let registered5 = await config.flightSuretyData.isRegisteredAirline.call(fifthAirline);
-    assert.equal(registered5, false, "Airline not funded should not participate in contract");
-
-  }); */
 
   it('registration of fifth and subsequent airlines requires multi-party consensus of 50% of registered airlines', async () => {
     const funding = web3.utils.toWei('10', 'ether');
@@ -179,27 +136,6 @@ contract('Flight Surety Tests', async (accounts) => {
     let result = await config.flightSuretyData.isRegisteredAirline.call(fourthAirline);
 
     assert.equal(result, true, "Multisig consensus failed!");
-    
-    //let registered = await config.flightSuretyData.isRegisteredAirline.call(secondAirline);
-    //console.log(`Registered ${registered}`)
-    // fund and register 4 airlines
-    //await config.flightSuretyData.setAirlineFund(firstAirline, { from: firstAirline, value: funding });
-    //await config.flightSuretyData.registerAirline(secondAirline, { from: firstAirline });
-    //await config.flightSuretyData.setAirlineFund(secondAirline, { from: secondAirline, value: funding });
-    //await config.flightSuretyData.registerAirline(thirdAirline, { from: secondAirline });
-    //await config.flightSuretyData.setAirlineFund(thirdAirline, { from: thirdAirline, value: funding });
-    //await config.flightSuretyData.registerAirline(fourthAirline, { from: thirdAirline });
-    //await config.flightSuretyData.fund({ from: fourthAirline, value: funding });
-
-    // fifth airline registration by first airline
-    /*await config.flightSuretyData.registerAirline(fifthAirline, { from: firstAirline });
-    let fifthRegistered = await config.flightSuretyData.isRegisteredAirline.call(fifthAirline);
-    assert.equal(fifthRegistered, false, "Multisig required to register fifth and subsequent airlines");
-
-    // fifth airline registration by second airline
-    await config.flightSuretyData.registerAirline(fifthAirline, { from: secondAirline });
-    let fifthRegistered2 = await config.flightSuretyData.isRegisteredAirline.call(fifthAirline);
-    assert.equal(fifthRegistered2, true, "Multisig registration by 50%");*/
 
   });
  
