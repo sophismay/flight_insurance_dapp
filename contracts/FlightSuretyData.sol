@@ -26,6 +26,14 @@ contract FlightSuretyData {
     mapping(address => uint256) private Votes;
     mapping(address => Airline) Airlines; // address to Airline
     address[] private registeredAirlines; // existing airlines for easy lookup
+    // airline fund
+    mapping(address => uint256) AirlinesFund;
+    // insurance
+    struct Insurance {
+        address passenger;
+        uint256 amount;
+    }
+    mapping(address => Insurance) private Insurances;
     // passenger
     uint private MAX_INSURANCE_PASSENGER = 1 ether;
     struct Passenger {
@@ -322,13 +330,23 @@ contract FlightSuretyData {
     function getFirstAirline() public view returns(address _firstAirline) {
         _firstAirline = firstAirline;
     }
+    
+    /**
+    ** @dev buy insurance for a flight by a passenger
+    **
+     */
+    function buyInsurance(address airline, uint256 amount, address _passenger) external requireIsOperational {
+        Insurances[airline] = Insurance({ passenger: _passenger, amount: amount });
+        uint256 tempAmount = AirlinesFund[airline];
+        AirlinesFund[airline] = tempAmount.add(amount);
+    }
 
 
    /**
     * @dev Buy insurance for a flight
     *
     */   
-    function buy
+    /*function buy
                             (   
                                 string flight,
                                 uint256 time,
@@ -359,14 +377,7 @@ contract FlightSuretyData {
             Passengers[msg.sender].isInsurancePaid = isInsurancePaid;
             Passengers[msg.sender].repayment = repaid;
             Passengers[msg.sender].fundsWithdrawn = fundsWithdrawn;
-            /*Passengers[msg.sender] = Passenger({
-                passengerAddress: msg.sender,
-                paidInsurance: paidInsurance,
-                flights: flights,
-                isInsurancePaid: isInsurancePaid,
-                repaid: repaid,
-                fundsWithdrawn: fundsWithdrawn
-            });*/
+            
         } else {
             int8 _index; 
             bool _insurancePaid; 
@@ -378,7 +389,7 @@ contract FlightSuretyData {
             Passengers[msg.sender].paidInsurance.push(msg.value);
             Passengers[msg.sender].flights.push(flight);
         }
-    }
+    }*/
 
     /**
      *  @dev Credits payouts to insurees
@@ -437,12 +448,8 @@ contract FlightSuretyData {
                             //requireAirlineRegistered
                             requireSufficientFunding(amount)
     {
-        //if (!Airlines[sender]) {
-        //    Airlines[sender] = Airline({
-        //        airlineAddress: sender,
-        //    })
-        //}
         Airlines[sender].hasFunded = true;
+        AirlinesFund[sender] = amount;
         emit FundReceived(sender, amount);
     }
 

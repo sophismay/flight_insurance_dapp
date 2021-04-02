@@ -188,6 +188,24 @@ flightSuretyApp.events.FlightStatusInfo({
   console.log(`FLIGHT STATUS INFO ${JSON.stringify(event.returnValues)}`)
 });
 
+flightSuretyApp.events.AirlineFundReceived({
+  fromBlock: 0
+}, (err, event) => {
+  if (err) {
+    console.log(`Airline fund error ${err}`);
+  }
+  console.log(`AIRLINE FUND RECEIVED: ${JSON.stringify(event.returnValues)}`);
+});
+
+flightSuretyApp.events.PassengerInsured({
+  fromBlock: 0
+}, (err, event) => {
+  if (err) {
+    console.log(`Passenger insured error ${err}`);
+  }
+  console.log(`PASSENGER INSURED: ${JSON.stringify(event.returnValues)}`);
+});
+
 
 const app = express();
 

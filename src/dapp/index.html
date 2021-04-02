@@ -39,34 +39,10 @@
 
         <div class="top-20">
 			<btn class="btn btn-primary" id="trigger-oracle-response" type="button">Check Flight Status</btn>
-			<span id='event-index-placeholder' style="display: none"></span>
+			
 		</div>
 
-        <!--<div id="display-wrapper" class="top-20">
-            Airline
-
-            <div class="row top-20">
-                <label class="form">Arline Address</label> 
-                <input type="text" id="airline-number"> 
-                <btn class="btn btn-primary" id="submit-oracle">
-                    Fund Airline
-                </btn>
-            </div>
-        </div>
-        <br/>
-        <span></span>-->
-
-        <!--<div id="display-wrapper" class="top-20">
-            Flight Status
-
-            <div class="row top-20">
-                <label class="form">Flight Status</label> 
-                <select id="flight-select"></select>
-                <btn class="btn btn-primary" id="submit-oracle">
-                    Check Status
-                </btn>
-            </div>
-        </div> -->
+        
         <br/>
         <span></span>
 
@@ -81,17 +57,17 @@
                 </btn>
                 <div id="flight-status-info"></div>
             </div>-->
-        </div>
-        <br/>
-        <span></span>
+            <div class="top-20" id="buy-insurance-container" style="display: none;">
+                <p id="buy-insurance-flight"></p>
+                <p id="buy-insurance-flight"></p>
+                <input id="buy-insurance-amount" type="number" step="any" required />
+                <btn class="btn btn-primary" id="buy-insurance-btn" type="button">
+                    Buy Insurance</btn>
+            </div>
 
-        <div id="display-wrapper" class="top-20">
-            Passenger Insurance Balance
-            <div id="passenger-credit"></div>
-            <btn class="btn btn-primary" id="passenger-credit-btn">
-                Check Insurance Credit
-            </btn>
-            <div class="row top-20">
+            <div class="top-20" id="withdraw-credit-container" style="display: none;">
+    
+                <p></p>
                 <label class="form">Withdraw credit</label>
                 <btn class="btn btn-primary" id="passenger-credit-withdraw">
                     Withdraw
@@ -99,6 +75,10 @@
                 <div id="flight-status-info"></div>
             </div>
         </div>
+        <br/>
+        <span></span>
+
+        
         <br/>
         <span></span>
 

@@ -9,6 +9,8 @@ import './flightsurety.css';
     let result;
     let airline;
     let flight;
+    let insurance;
+    let insured;
     let date;
     const SERVER_URL = 'http://localhost:3000'
     const flights_path = '/api/flights'
@@ -28,13 +30,17 @@ import './flightsurety.css';
         DOM.elid('submit-oracle').addEventListener('click', () => {
             const tempFlight = DOM.elid('flight-number').value;
             const tempDate = DOM.elid('departure-date').value;
-
+            const timestamp = (new Date(tempDate)).getTime();
             // Write transaction
-            contract.fetchFlightStatus(tempFlight, tempDate, (error, result) => {
+            contract.fetchFlightStatus(tempFlight, timestamp, (error, result) => {
                 date = result.timestamp;
                 flight = result.flight;
                 airline = result.airline;
-                display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
+                // make it possible to buy insurance
+                const container = document.getElementById('buy-insurance-container');
+                container.style.display = 'block';
+                
+                display('Oracles', 'Flight Status', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
         })
 
@@ -46,9 +52,9 @@ import './flightsurety.css';
                 .then(index => {
                     // set index in UI
                     const _index = parseInt(index);
-                    const elem = document.getElementById('event-index-placeholder');
-                    elem.innerHTML = `Index: ${_index}`;
-                    elem.style.display = 'block';
+                    //const elem = document.getElementById('event-index-placeholder');
+                    //elem.innerHTML = `Index: ${_index}`;
+                    //elem.style.display = 'block';
 
                     contract
                         .submitToOracle(airline, flight, date, _index, (err, data) => {
@@ -56,17 +62,61 @@ import './flightsurety.css';
                                 console.error(err);
                             }
                             // set all in status-box div
-                            console.log(data);
+                            console.log(data, new Date(date));
                             const box = document.getElementById('status-box');
-                            box.innerHTML = `<p>Airline: ${data.airline}</p><p>Flight: ${flight}</p><p>Timestamp: ${new Date(data.timestamp)}</p><p>Index: ${_index}</p><p>Status Code: ${data.statusCode}`;
+                            box.innerHTML = `<p>Airline: ${data.airline}</p><p>Flight: ${flight}</p><p>Timestamp: ${new Date(data.timestamp)}</p><p>Index: ${_index}</p>`;
                             const status_code = data.statusCode;
-                            if (status_code == 20 || status_code == 40) {
+                            const _withdrawable = insured ? insured : 0;
 
+                            // flight status unknown
+                            if (status_code == 0) {
+                                let temp = box.innerHTML;
+                                box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-unknown">Unknown (${data.statusCode})</span></p><p> Withdrawable Amount: 0.00</p>`;
+                            }
+
+                            // flight on time
+                            if (status_code == 10) {
+                                let temp = box.innerHTML;
+                                box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-ontime">On Time (${data.statusCode})</span></p><p> Withdrawable Amount: 0.00</p>`;
+                            }
+
+                            // if flight delayed, show payout possibility
+                            if (status_code == 20 || status_code == 30 || status_code == 40 || status_code == 50) {
+                                let temp = box.innerHTML;
+                                box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-delayed">Delayed (${data.statusCode})</span></p><p> Withdrawable Amount: ${_withdrawable}</p>`;
+                                document.getElementById('withdraw-credit-container').style.display = 'block';
+                                
                             }
                         });
                 })
                 .catch(e => { console.log(e); } );
-        })
+        });
+
+        DOM.elid('buy-insurance-btn').addEventListener('click', (e) => {
+            const amount = DOM.elid('buy-insurance-amount').value;
+            //const flight = DOM.elid('buy-insurance-flight').innerHTML;
+            //const departure = DOM.elid('buy-insurance-departure').innerHTML;
+
+            contract
+                .buyInsurance(amount, (err, res) => {
+                    console.log(`insurane bought at : ${amount}`);
+                    insurance = amount;
+                    insured = parseFloat(amount) * 1.5;
+				    display('Oracles', 'Insurance details', 
+                        [{ 
+                            label: 'Insurance Details', 
+                            error: err, 
+                            value: "Flight: " + flight + " | Departure: " + date + " | Amount: " + amount + " ether" + " | Payout on Delay: " + amount * 1.5 + " ether" 
+                        }], "display-flight", "display-detail");
+
+
+                });
+        });
+
+        DOM.elid('passenger-credit-withdraw').addEventListener('click', (e) => {
+            
+
+        });
     
     });
     

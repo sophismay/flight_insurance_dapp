@@ -10,7 +10,7 @@ interface FlightSuretyData {
     function isOperational() external view returns(bool);
     function setOperatingStatus(bool mode) external;
     function registerAirline(address airline, address sender) external;
-    function buy(string flight, uint256 time, address passenger, uint256 amount) external payable;
+    function buyInsurance(address airline, uint256 amount, address passenger) external payable;
     function creditInsurees(string flight) external;
     function pay() external;
     function fund(address sender, uint256 amount) external payable;
@@ -62,6 +62,7 @@ contract FlightSuretyApp {
     // event
     event FlightRegistered(string flightId);
     event AirlineRegistered(address airline);
+    event AirlineFundReceived(address airline, uint256 amount);
     event PassengerInsured(address passenger, uint256 amount); // or at data contract level?
 
  
@@ -253,13 +254,13 @@ contract FlightSuretyApp {
         require(msg.value >= AIRLINE_FUNDING, "FUND AIRLINE: INSUFFICIENT AMOUNT!");
 
         DataContract.fund(msg.sender, msg.value);
+        emit AirlineFundReceived(msg.sender, msg.value);
     }
 
-    function insurePassenger(address flight, string flightId, uint256 time, address passenger) external payable requireIsOperational {
-        // require min or max payment to insure?
-        // is msg.sender same as passenger?
-        DataContract.buy(flightId, time, passenger, msg.value);
-        emit PassengerInsured(passenger, msg.value);
+    function buyInsurance(address airline) external payable requireIsOperational{
+        require(msg.value <= 1 ether && msg.value > 0, "BUY INSURANCE: INSURANCE MUST BE MORE THAN 0, NOT MORE THAN 1 ether");
+        DataContract.buyInsurance(airline, msg.value, msg.sender);
+        emit PassengerInsured(msg.sender, msg.value);
     }
 
     function isAirlineRegistered(address airline) public view returns(bool) {

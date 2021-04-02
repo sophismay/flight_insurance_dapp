@@ -40,3 +40,12 @@ label.form {
 input {
     margin-right: 30px;
 }
+.flight-status-delayed {
+    color: red;
+}
+.flight-status-ontime {
+    color: green;
+}
+.flight-status-unknown {
+    color: orange;
+}

@@ -23,80 +23,6 @@ export default class Contract {
         console.log(`status code random : ${random_status_code}`);
     }
 
-    /*initialize(callback, config) {
-        this.web3.eth.getAccounts( async (error, accts) => {
-            if(error) {
-                console.log(error);
-            }
-            this.owner = accts[0];
-            const gas = 5900000;
-            let funding = this.web3.utils.toWei("10", "ether").toString();
-            // register first airline ?
-            this.firstAirline = accts[1];
-            // authorize app
-            let self = this;
-            this.authorizeCaller(config);
-
-            let counter = 2;
-
-            //await this.flightSuretyApp.methods.fund().send({ from: accts[1], value: funding, gas: gas });
-            //await this.flightSuretyApp.methods.registerAirline(self.firstAirline).call({ from: accts[1], gas: gas });
-            while(this.airlines.length < 5) {
-                let flight = {
-                    address: accts[counter],
-                    flightId: `ID${counter}`,
-                    time: (new Date()).getTime()
-                }
-                let airline = {
-                    address: accts[++counter],
-                    isRegistered: false,
-                    votes: 0,
-                    hasFunded: false
-                }
-                //this.airlines.push(accts[counter++]);
-                this.flights.push(flight);
-                this.airlines.push(airline);
-                counter += 1;
-            }
-            // authorize client
-            await this.authorizeCaller(config);
-            // is firstAirline registered
-            //await this.flightSuretyData.methods.getFirstAirline().call().then(console.log);
-            await self.flightSuretyApp.methods.isAirlineRegistered(this.firstAirline).call({ from: self.owner }).then(console.log)
-
-            // register and fund first airline , before registering others
-            //await this.flightSuretyApp.methods.registerAirline(this.firstAirline).send({ from: })
-            await this.flightSuretyApp.methods.fund().send({ from: this.firstAirline, value: funding, gas: gas });
-
-            // register airlines
-            this.registerAirlines(this.firstAirline, gas);
-
-            // fund airlines
-            for(const airline of this.airlines) {
-                //console.log(airline);
-                await self.flightSuretyApp
-                    .methods
-                    .fund()
-                    .send({ from: airline['address'], value: funding, gas: gas }, async (err, res) => {
-                        if(err) { console.log(err); }
-                        else {
-                            // update airline info
-                            airline['hasFunded'] = true;
-                        }
-                    });
-                
-            }
-            
-            this.registerFlights(self.owner, gas);
-
-            while(this.passengers.length < 5) {
-                this.passengers.push(accts[counter++]);
-            }
-
-            callback();
-        }); 
-    }*/
-
     initialize(callback, config) {
         this.web3.eth.getAccounts( async (error, accts) => {
             this.owner = accts[0];
@@ -124,6 +50,7 @@ export default class Contract {
             }
             // fund first airline before registering
             this.fundAirline(this.owner, funding, gas);
+            this.fundAirline(this.airlines[2], funding, gas);
 
             this.registerAirlines(this.owner, gas);
 
@@ -229,7 +156,7 @@ export default class Contract {
         let data = {
             airline: self.airlines[0]['address'],
             flight: flight,
-            timestamp: Date.parse(date.toString()) / 1000 //Math.floor(Date.now() / 1000)
+            timestamp: date //Date.parse(date.toString()) / 1000 //Math.floor(Date.now() / 1000)
         } 
         await self.flightSuretyApp.methods
             .fetchFlightStatus(data.airline, data.flight, data.timestamp)
@@ -238,9 +165,9 @@ export default class Contract {
             });
     }
 
-    async insurePassenger(flight, amount, next) {
+    async buyInsurance(amount, next) {
         let self = this;
-        let flightToInsure;
+        /*let flightToInsure;
         
         for (const flt of self.flights) {
             if (flt["flightId"] == flight) {
@@ -252,16 +179,17 @@ export default class Contract {
         if (!flightToInsure) {
             console.log("INSURE PASSENGER: FLIGHT NOT FOUND!")
             return
-        }
-
+        }*/
 
         let toSend = self.web3.utils.toWei(amount, "ether").toString();
-        console.log(sendAmt);
+        console.log(toSend);
         
-        await self.flightSuretyApp
+        await self
+            .flightSuretyApp
             .methods
-            .insurePassenger(flightToInsure["address"], flightToInsure["flightId"], flightToInsure["time"], self.passengers[1]) // check last arg
-            .send({ from: self.passengers[1], value: toSend,  gas: gas }, (error, result) => {
+            //.insurePassenger(flightToInsure["address"], flightToInsure["flightId"], flightToInsure["time"], self.passengers[1]) // check last arg
+            .buyInsurance(self.airlines[2]['address'])
+            .send({ from: self.passengers[1], value: toSend,  gas: self.gas }, (error, result) => {
                 next(error, result);
             });
     }
