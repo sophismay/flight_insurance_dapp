@@ -24,6 +24,7 @@ interface FlightSuretyData {
     function getVotesCount(address airline) external view returns(uint256);
     function updateVotesCount(address airline, uint count) external;
     function resetVotesCount(address airline) external;
+    function withdraw(address airline, address passenger) external;
 }
 
 /************************************************** */
@@ -64,6 +65,7 @@ contract FlightSuretyApp {
     event AirlineRegistered(address airline);
     event AirlineFundReceived(address airline, uint256 amount);
     event PassengerInsured(address passenger, uint256 amount); // or at data contract level?
+    event PassengerPayout(address passenger);
 
  
     /********************************************************************************************/
@@ -269,6 +271,11 @@ contract FlightSuretyApp {
 
     function getFirstAirline() public view returns(address) {
         return DataContract.getFirstAirline();
+    }
+
+    function payout(address airline) external requireIsOperational {
+        DataContract.withdraw(airline, msg.sender);
+        emit PassengerPayout(msg.sender);
     }
 
 

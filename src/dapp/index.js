@@ -12,6 +12,7 @@ import './flightsurety.css';
     let insurance;
     let insured;
     let date;
+    let delayed = false;
     const SERVER_URL = 'http://localhost:3000'
     const flights_path = '/api/flights'
 
@@ -52,15 +53,20 @@ import './flightsurety.css';
                 .then(index => {
                     // set index in UI
                     const _index = parseInt(index);
-                    //const elem = document.getElementById('event-index-placeholder');
-                    //elem.innerHTML = `Index: ${_index}`;
-                    //elem.style.display = 'block';
 
                     contract
                         .submitToOracle(airline, flight, date, _index, (err, data) => {
                             if(err) {
                                 console.error(err);
                             }
+                            // hide messages
+                            let errorDiv = document.getElementById('passenger-withdraw-error');
+                            errorDiv.style.display = 'none';
+                            let successContainer = document.getElementById('passenger-withdraw-success');
+                            successContainer.innerHTML = '';
+                            successContainer.style.display = 'none';
+                            
+
                             // set all in status-box div
                             console.log(data, new Date(date));
                             const box = document.getElementById('status-box');
@@ -70,22 +76,25 @@ import './flightsurety.css';
 
                             // flight status unknown
                             if (status_code == 0) {
+                                delayed = false;
                                 let temp = box.innerHTML;
                                 box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-unknown">Unknown (${data.statusCode})</span></p><p> Withdrawable Amount: 0.00</p>`;
                             }
 
                             // flight on time
                             if (status_code == 10) {
+                                delayed = false;
                                 let temp = box.innerHTML;
                                 box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-ontime">On Time (${data.statusCode})</span></p><p> Withdrawable Amount: 0.00</p>`;
                             }
 
                             // if flight delayed, show payout possibility
                             if (status_code == 20 || status_code == 30 || status_code == 40 || status_code == 50) {
+                                delayed = true;
                                 let temp = box.innerHTML;
                                 box.innerHTML = `${temp}<p>Flight Status: <span class="flight-status-delayed">Delayed (${data.statusCode})</span></p><p> Withdrawable Amount: ${_withdrawable}</p>`;
                                 document.getElementById('withdraw-credit-container').style.display = 'block';
-                                
+    
                             }
                         });
                 })
@@ -94,8 +103,6 @@ import './flightsurety.css';
 
         DOM.elid('buy-insurance-btn').addEventListener('click', (e) => {
             const amount = DOM.elid('buy-insurance-amount').value;
-            //const flight = DOM.elid('buy-insurance-flight').innerHTML;
-            //const departure = DOM.elid('buy-insurance-departure').innerHTML;
 
             contract
                 .buyInsurance(amount, (err, res) => {
@@ -108,14 +115,24 @@ import './flightsurety.css';
                             error: err, 
                             value: "Flight: " + flight + " | Departure: " + date + " | Amount: " + amount + " ether" + " | Payout on Delay: " + amount * 1.5 + " ether" 
                         }], "display-flight", "display-detail");
-
-
                 });
         });
 
         DOM.elid('passenger-credit-withdraw').addEventListener('click', (e) => {
-            
-
+            // chceck if flight delayed first
+            if(!delayed) {
+                let errorDiv = document.getElementById('passenger-withdraw-error');
+                errorDiv.style.display = 'block';
+                return;
+            }
+            contract
+                .withdraw((err, res) => {
+                    // display amount withdrawn
+                    if (err) { console.log(`Error withdrawing insurance credit : ${err}`); }
+                    let successContainer = document.getElementById('passenger-withdraw-success');
+                    successContainer.innerHTML = `${insured} ether has been sent to your wallet`;
+                    successContainer.style.display = 'block';
+                });
         });
     
     });

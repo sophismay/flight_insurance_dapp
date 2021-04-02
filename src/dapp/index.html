@@ -48,15 +48,6 @@
 
         <div id="display-wrapper" class="top-20">
             Passenger Insurance
-
-            <!--<div class="row top-20">
-                <label class="form">Flight Status</label> 
-                <select id="flight-select"></select>
-                <btn class="btn btn-primary" id="flight-status-btn">
-                    Check Status
-                </btn>
-                <div id="flight-status-info"></div>
-            </div>-->
             <div class="top-20" id="buy-insurance-container" style="display: none;">
                 <p id="buy-insurance-flight"></p>
                 <p id="buy-insurance-flight"></p>
@@ -72,6 +63,9 @@
                 <btn class="btn btn-primary" id="passenger-credit-withdraw">
                     Withdraw
                 </btn>
+                <p></p>
+                <span id="passenger-withdraw-error" style="display: none;color: red;"> Can't withdraw, flight not delayed!</span>
+                <span id="passenger-withdraw-success" style="display: none; color: green;"></span>
                 <div id="flight-status-info"></div>
             </div>
         </div>

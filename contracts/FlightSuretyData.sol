@@ -108,39 +108,11 @@ contract FlightSuretyData {
         _;
     }
 
-    // require multiparty consensus 
-    modifier requireMultipartyConsensus(address sender) {
-        // initially, just first 4 or below can register, else multisig
-        if(registeredAirlines.length < 4) {
-            _;
-        } else {
-            bool isDuplicate = false;
-            // needs optimization: eg. make caller get for each airline
-            for(uint c=0; c<multisigCalls.length; c++) {
-                if(multisigCalls[c] == sender) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            require(!isDuplicate, "Caller has already called this function");
-            multisigCalls.push(sender);
-            // threshold to register
-            uint256 registeredSize = registeredAirlines.length;
-            MIN_CONSENSUS_RESPONSES = registeredSize.div(2);
-            require(MIN_CONSENSUS_RESPONSES > 1, "More than one participant needed for multisig");
-            if (multisigCalls.length >= MIN_CONSENSUS_RESPONSES) {
-                // reset multisig calls tracker
-                multisigCalls = new address[](0);
-                // continue execution smart contract action
-                _;
-            }
-        }
-        
-    }
 
     // require passenger has enough insurance payout
-    modifier requireEnoughPayout(address passenger) {
-        require(Passengers[passenger].repayment > 0 ether, "Passenger has no insurance payout!");
+    modifier requireEnoughPayout(address airline, address passenger) {
+        Insurance _insurance = Insurances[airline];
+        require(_insurance.amount > 0, "PAYOUT: PASSENGER HAS NO INSURANCE CREDIT TO WITHDRAW");
         _;
     }
 
@@ -193,12 +165,6 @@ contract FlightSuretyData {
     {
         operational = mode;
     }
-
-    // set fund of airline
-    //function setAirlineFund(address airline) external payable requireIsOperational requireAirlineRegistered requireSufficientFunding(msg.value) {
-    //    //require(address(this).transfer(amount), "Error receiving funds")
-    //    Airlines[airline].hasFunded = true;
-    //}
 
     // check if airline is registered
     function isRegisteredAirline(address airline) public view returns(bool isRegistered) {
@@ -271,10 +237,14 @@ contract FlightSuretyData {
     }
 
     // payout insurance to passenger
-    function withdraw(address passenger) external requireIsOperational requireAuthorizedApp requireEnoughPayout(passenger) {
-        uint256 _payout = Passengers[passenger].repayment;
-        Passengers[passenger].repayment = 0;
+    function withdraw(address airline, address passenger) external requireIsOperational requireEnoughPayout(airline, passenger) {
+        Insurance _insurance = Insurances[airline];
+        uint256 _payout = _insurance.amount;
+
+        // ensure safe transfer
+        delete Insurances[airline];
         passenger.transfer(_payout);
+
         emit PassengerInsurancePayout(passenger, _payout);
     }
 
@@ -290,36 +260,26 @@ contract FlightSuretyData {
                             )
                             external
                             requireIsOperational
-                            //requireAirlineRegistered(sender) // only registered airline can register another
-                            //requireMultipartyConsensus(sender)
-                            //requireAirlineHasFunded(sender) // sender can participate only if funded
-                            //returns(bool, uint)
     {
-        // avoid duplicate registration
-        //require(!Airlines[airline].isRegistered, "REGISTER AIRLINE: AIRLINE ALREADY REGISTERED!");
         Airlines[airline] = Airline({
             airlineAddress: airline,
             isRegistered: true,
-            //votes: 0,
             hasFunded: false
         });
         setMultisigCall(airline);
         registeredAirlines.push(airline);
         emit AirlineRegistered(airline);
-        //registeredAirlines[airline] = _airline;
-        //return (true, Airlines[airline].votes);
     }
 
     // register first airline
     function registerFirstAirline(address newAirlineAddress) internal requireIsOperational {
-        //require(!Airlines[newAirlineAddress].isRegistered, "Airline is already registered.");
 
         Airlines[newAirlineAddress].airlineAddress = newAirlineAddress;
         Airlines[newAirlineAddress].isRegistered = true;
         Airlines[newAirlineAddress].hasFunded = false;
-        //Airlines[newAirlineAddress].votes = 0;
         registeredAirlines.push(newAirlineAddress);
         firstAirline = newAirlineAddress;
+
         emit AirlineRegistered(newAirlineAddress);
     }
 
@@ -341,56 +301,6 @@ contract FlightSuretyData {
         AirlinesFund[airline] = tempAmount.add(amount);
     }
 
-
-   /**
-    * @dev Buy insurance for a flight
-    *
-    */   
-    /*function buy
-                            (   
-                                string flight,
-                                uint256 time,
-                                address passenger,
-                                uint256 amount                         
-                            )
-                            external
-                            payable
-                            requireIsOperational
-                            requireAuthorizedApp
-    {
-        require(msg.value <= MAX_INSURANCE_PASSENGER, "A maximum insurance of 1 ether is permitted!");
-
-        // check for first time insurance
-        // aasuming msg.sender is passenger
-        if(Passengers[msg.sender].isInsurancePaid.length < 1) {
-            uint256[] memory paidInsurance = new uint256[](0);
-            string[] memory flights = new string[](0);
-            bool[] memory isInsurancePaid = new bool[](0);
-            uint256 repaid = 0;
-            uint256 fundsWithdrawn = 0;
-            paidInsurance[0] = msg.value; // assuming sender is passenger
-            flights[0] = flight;
-            isInsurancePaid[0] = false;
-            Passengers[msg.sender].passengerAddress = msg.sender;
-            Passengers[msg.sender].paidInsurance = paidInsurance;
-            Passengers[msg.sender].flights = flights;
-            Passengers[msg.sender].isInsurancePaid = isInsurancePaid;
-            Passengers[msg.sender].repayment = repaid;
-            Passengers[msg.sender].fundsWithdrawn = fundsWithdrawn;
-            
-        } else {
-            int8 _index; 
-            bool _insurancePaid; 
-            uint256 _paidInsurance;
-            (_index, _insurancePaid, _paidInsurance) = getPassengerFlightInfo(msg.sender, flight);
-            require(_index == -1, "Passenger insured for this flight already!");
-
-            Passengers[msg.sender].isInsurancePaid.push(true);
-            Passengers[msg.sender].paidInsurance.push(msg.value);
-            Passengers[msg.sender].flights.push(flight);
-        }
-    }*/
-
     /**
      *  @dev Credits payouts to insurees
     */
@@ -401,7 +311,6 @@ contract FlightSuretyData {
                                 external
                                 requireIsOperational
                                 requireAuthorizedApp
-                                // requireRegisteredFlight?
     {   int8 _index; 
         bool _isInsurancePaid; 
         uint256 _paidInsurance;

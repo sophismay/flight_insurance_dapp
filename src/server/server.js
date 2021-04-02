@@ -1,4 +1,3 @@
-//import 'babel-polyfill';
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
@@ -6,7 +5,6 @@ import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 import express from 'express';
-//import { indexOf } from "core-js/core/array";
 
 
 let config = Config['localhost'];
@@ -23,8 +21,6 @@ web3.eth.getAccounts( async (error, accounts) => {
   const owner = accounts[0];
   flightSuretyData.methods.authorizeCaller(flightSuretyApp._address).send({ from: owner, gas: gas });
 
-  //let registrationFeeCall = flightSuretyApp.methods.REGISTRATION_FEE.call();
-  //console.log(`registration fee call ${JSON.stringify(registrationFeeCall)}`)
   flightSuretyApp.methods.REGISTRATION_FEE().call()
     .then( (fee) => {
       for(let i=10; i<30; i++) {
@@ -34,8 +30,6 @@ web3.eth.getAccounts( async (error, accounts) => {
             .then( indexes => {
               console.log(`After oracle getting their indexes ${indexes} ${Object.values(indexes)}`);
               oracles[accounts[i]] = [].concat.apply([], Object.values(indexes));
-              // checking registered oracles and indexes
-              //console.log(`Oracles and their indexes : ${JSON.stringify(oracles)}`)
             })
             .catch( err => { console.log(err); });
         }).catch( err => { console.log(err); })
@@ -47,32 +41,6 @@ web3.eth.getAccounts( async (error, accounts) => {
     });
 });
 
-/*flightSuretyApp.events.OracleRequest({
-    fromBlock: 0
-  }, function (error, event) {
-    if (error) console.log(error);
-    else {
-      console.log(`EVENT RETURN VALUE: ${event.returnValue}`);
-      var statusCodes = [0, 10, 20, 30, 40, 50];
-      var statusCode = statusCodes[Math.floor(Math.random() * statusCodes.length)];
-
-      for(const oracleAddress in oracles) {
-        let indexes = oracles[oracleAddress];
-        console.log(`INDEXES: ${indexes}`);
-        // if index found, submit oracle response
-        if (indexes.indexOf(event.returnValue.index) != -1) {
-          flightSuretyApp.methods
-            .submitOracleResponse(event.returnValues.index, event.returnValues.airline, event.returnValues.flight, event.returnValues.timestamp, oracleAddress)
-            .send({ from: oracleAddress })
-            .then( result => {
-              console.log(`Oracle response submitted: ${oracleAddress}`);
-            }).catch(err => console.log(err));
-        }
-      }
-    }
-    
-});*/
-
 flightSuretyApp.events.OracleRequest({
     fromBlock: "latest"
   }, function (error, event) {
@@ -81,47 +49,6 @@ flightSuretyApp.events.OracleRequest({
     console.log(`oracle request : ${JSON.stringify(event.returnValues)}`);
     index = event.returnValues.index;
     console.log(`index set: ${index}`);
-
-    const airline = event.returnValues.airline;
-    const flight = event.returnValues.flight;
-    const timestamp = event.returnValues.timestamp;
-    //const statusCode = event.returnValues.statusCode;
-
-    // right away trigger oracle response?
-    /*console.log(statusCode);
-    const addresses = Object.keys(oracles);
-    console.log(`addresses : ${addresses}`);
-    addresses.forEach( (address, indx) => {
-      // only send if event index from before, matches indexes of oracle
-      console.log(`address: ${address}`);
-      const assignedIndexes = intify(oracles[address]);
-      console.log(assignedIndexes, assignedIndexes.indexOf(index));
-      console.log(JSON.stringify(oracles[address]));
-      if (assignedIndexes) {
-        //if (Array(assignedIndexes).indexOf(index) > -1) {
-          //for(var j=0; j<oracles[address].length; j++) {
-            console.log("About to submit oracle response")
-            flightSuretyApp
-              .methods
-              .submitOracleResponse(
-                index,
-                //intify(oracles[address])[j], 
-                airline, 
-                flight, 
-                timestamp,
-                statusCode)
-              .send({ from: address, gas: gas })
-              .then( res => {
-                console.log("after submitting response came in")
-                console.log(res); 
-              })
-              .catch(console.log);
-          //}
-          
-        //}
-      }
-      
-    });*/
 });
 
 function intify(arr) {
